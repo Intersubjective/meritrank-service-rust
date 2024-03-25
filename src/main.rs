@@ -1,27 +1,22 @@
 use std::thread;
 use std::time::Duration;
 use std::env::var;
-use lazy_static::lazy_static;
 use std::string::ToString;
-use mrgraph::error::GraphManipulationError;
-use meritrank::{Node, NodeId};
-use mrgraph::mrgraph::{GraphSingleton, GRAPH};
-use meritrank::{MeritRank, MeritRankError, MyGraph, Weight};
-use nng::{Aio, AioResult, Context, Message, Protocol, Socket};
-
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::sync::MutexGuard;
 use petgraph::graph::{EdgeIndex, NodeIndex};
+use nng::{Aio, AioResult, Context, Message, Protocol, Socket};
+use mrgraph::error::GraphManipulationError;
+use mrgraph::mrgraph::{GraphSingleton, GRAPH};
+use mrgraph::mrgraph::NodeId;
+use meritrank::{MeritRank, MyGraph, MeritRankError, Weight};
+//use mrgraph::meritrank::{MeritRank, MyGraph, MeritRankError}; // , Weight
 
-//mod graph; // This module is for graph related operations
-// #[cfg(feature = "shared")]
-// mod shared; // This module contains shared data structures
+//pub type Weight = f64;
 
-//mod error;
-//mod lib_graph; // This module contains graph related operations and data structures
 
-lazy_static! {
+lazy_static::lazy_static! {
     static ref SERVICE_URL: String =
         var("RUST_SERVICE_URL")
             .unwrap_or("tcp://127.0.0.1:10234".to_string());
@@ -41,7 +36,8 @@ lazy_static! {
     static ref WEIGHT_MIN_LEVEL: Weight =
         var("WEIGHT_MIN_LEVEL")
             .ok()
-            .and_then(|s| s.parse::<Weight>().ok())
+            .and_then(|s| s.parse::<Weight>().ok()) // the trait `FromStr` is not implemented for `Weight`
+            //.and_then(|s| s.parse::<f64>().ok())
             .unwrap_or(0.1); // was: 1.0
 
     static ref EMPTY_RESULT: Vec<u8> = {
@@ -49,34 +45,6 @@ lazy_static! {
         rmp_serde::to_vec(&EMPTY_ROWS_VEC).unwrap()
     };
 }
-
-/*
-trait MyMyGraph {
-    fn shortest_path(&self, start: NodeId, goal: NodeId) -> Option<Vec<NodeId>>;
-}
-
-impl MyMyGraph for MyGraph {
-    fn shortest_path(&self, start: NodeId, goal: NodeId) -> Option<Vec<NodeId>> {
-        let start_index = self.get_node_index(start)?;
-        let goal_index = self.get_node_index(goal)?;
-        let (_, v) =
-            petgraph::algo::astar(
-                &self.graph,
-                start_index,
-                |finish| finish == goal_index,
-                |e| *e.weight(),
-                |_| 0.0f64
-            )?;
-        let result: Vec<NodeId> =
-            v
-                .iter()
-                .map(|&idx| self.index2node(idx))
-                .collect();
-
-        Some(result)
-    }
-}
-*/
 
 // const PARALLEL: usize = 128;
 fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
@@ -301,15 +269,6 @@ impl GraphContext {
             Some(context) => GraphSingleton::get_rank1(&context),
         }
     }
-
-    /*
-    fn borrow_graph<'a>(&'a self, mut graph: MutexGuard<GraphSingleton>) -> &MyGraph {
-        match &self.context {
-            None => graph.borrow_graph(),
-            Some(ctx) => graph.borrow_graph1(ctx)
-        }
-    }
-    */
 
     fn get_node_id(&self, mut graph: &mut MutexGuard<GraphSingleton>, name: &str) -> NodeId {
         match &self.context {
@@ -639,6 +598,7 @@ impl GraphContext {
                         Ok(())
                     } else if v3.is_empty() {
                         // No path found, so add just the focus node to show at least something
+                        //let node = mrgraph::meritrank::node::Node::new(focus_id);
                         let node = meritrank::node::Node::new(focus_id);
                         copy.add_node(node);
                         println!("copy.add_node({:?}) (by node)", focus_id);

@@ -270,7 +270,7 @@ impl GraphContext {
         }
     }
 
-    fn get_node_id(&self, mut graph: &mut MutexGuard<GraphSingleton>, name: &str) -> NodeId {
+    fn get_node_id(&self, graph: &mut MutexGuard<GraphSingleton>, name: &str) -> NodeId {
         match &self.context {
             None => graph.get_node_id(name),
             Some(ctx) => graph.get_node_id1(ctx.as_str(), name)
@@ -410,7 +410,7 @@ impl GraphContext {
         // let rank: MeritRank = self.get_rank()?;
         // rank.calculate need mutable rank
         match GRAPH.lock() {
-            Ok(mut graph) => {
+            Ok(graph) => {
                 let mut rank: MeritRank = self.get_rank()?;
                 // MeritRank::new(graph.borrow_graph().clone())?;
                 // ? should we change weight/scores in GRAPH ?

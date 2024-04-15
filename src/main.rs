@@ -310,7 +310,7 @@ impl GraphContext {
                 )
             })
             .filter(|(_, target, _)| target.starts_with(target_like))
-            .filter(|(_, _, score)| score_gt > *score || (score_gte && score_gt == *score));
+            .filter(|(_, _, score)| *score > score_gt || (score_gte && score_gt == *score));
 
         let limited: Vec<(&str, String, Weight)> =
             match limit {
